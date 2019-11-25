@@ -1,0 +1,5 @@
+C:\Users\accountant.AHM\RiderProjects\Logger\Logger\bin\Debug\Looger.exe
+C:\Users\accountant.AHM\RiderProjects\Logger\Logger\bin\Debug\Looger.pdb
+C:\Users\accountant.AHM\RiderProjects\Logger\Logger\obj\Debug\Logger.csprojResolveAssemblyReference.cache
+C:\Users\accountant.AHM\RiderProjects\Logger\Logger\obj\Debug\Looger.exe
+C:\Users\accountant.AHM\RiderProjects\Logger\Logger\obj\Debug\Looger.pdb
