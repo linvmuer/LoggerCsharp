@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
-
+using System.Threading;
+using System.Threading.Tasks;
+using System.Data.SQLite;
 namespace Logger
 {
     internal class Program
@@ -9,7 +12,11 @@ namespace Logger
         public static void Main(string[] args)
         {
             LogHelper.Log(LogTarget.File,"Hello  sdfjsdfjsdjfsdf dfjsdfjdsfjdsf dsfjsdfjdsjfds fdfjdjfdjf",Level.Exception);
+            LogHelper.Log(LogTarget.Database,"hello into database",Level.Exception);
+            
         }
+
+
         public  enum LogTarget
         {
             File,Database,EventLog
@@ -50,7 +57,7 @@ namespace Logger
             {
                 lock (lockObj)
                 {
-                    //we can have error when trying to write to a directory
+                    //we can have error when trying to write to a directory make sure to always write to files
                     if (level == Level.Normal)
                     {
                         
@@ -80,12 +87,51 @@ namespace Logger
 
         public class DBLogger : LogBase
         {
+            static  string  datapath=@"URI=file:C:\Users\path_to_db";
             private string connectionString = string.Empty;
+            private static bool TableExists (String tableName, SQLiteConnection connection)
+            { 
+                var cmd=new SQLiteCommand(connection);
+                cmd.CommandText = "SELECT * FROM sqlite_master WHERE type = 'table' AND name = @name";
+                cmd.Parameters.Add("@name", DbType.String).Value = tableName;
+                return (cmd.ExecuteScalar() != null);
+            }
             public override void Log(string message, Level level)
             {
                 lock (lockObj)
                 {
-                    throw new NotImplementedException();
+                    
+                    var con=new SQLiteConnection(datapath);
+                    con.Open();
+
+                    string stm = @"CREATE TABLE IF NOT EXISTS log_data(id INTEGER PRIMARY KEY ,
+                                                                      type TEXT,
+                                                                      time TEXT,
+                                                                      message TEXT)";
+                    var cmd=new SQLiteCommand(stm,con);
+                    var result=cmd.ExecuteNonQuery();
+                    if (result>0)
+                    {
+                        cmd.CommandText= @"INSERT INTO log_data(type,time,message) VALUES(@type,@time,@message)";
+                        cmd.Prepare();
+                        cmd.Parameters.AddWithValue("@type", $"{level}");
+                        cmd.Parameters.AddWithValue("@time", DateTime.Now.ToString());
+                        cmd.Parameters.AddWithValue("@message", message);
+                        cmd.ExecuteNonQuery();
+                        con.Close();
+
+                    }
+
+                    else if (TableExists("log_data", con))
+                    {
+                        cmd.CommandText= @"INSERT INTO log_data(type,time,message) VALUES(@type,@time,@message)";
+                        cmd.Prepare();
+                        cmd.Parameters.AddWithValue("@type", $"{level}");
+                        cmd.Parameters.AddWithValue("@time", DateTime.Now.ToString());
+                        cmd.Parameters.AddWithValue("@message", message);
+                        cmd.ExecuteNonQuery();
+                        con.Close();
+                    }
                 }
             }
         }
